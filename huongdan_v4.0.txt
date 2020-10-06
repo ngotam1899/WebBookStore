@@ -1,0 +1,137 @@
+Hướng dẫn xây dựng Ứng dụng web Bookstore sử dụng Node.js
+
+**** Phần 4 - Xây dựng Ứng dụng web động Express server ****
+
+Phần 1. Xây dựng chức năng hiển thị danh sách sản phẩm và chi tiết sản phẩm 
+1. Thiết kế route xử lý 
+HTTP	Trang web		Route				
+GET		view index	/, /products
+GET		view details	/products/:id
+
+2. Cài đặt express-handlebars-paginate là 1 helper phát sinh giao diện pagination cho handlebars
+$ npm install --save express-handlebars-paginate
+
+********Lưu ý: Fix lỗi phiên bản Handlebars mới nhất********
+Báo lỗi: (Handlebars: Access has been denied to resolve the property “from” because it is not an “own property” of its parent)
+
+1. Cài đặt phần phụ thuộc @handlebars/allow-prototype-access
+npm i @handlebars/allow-prototype-access
+
+2. Tại file index.js chạy đầu
+const Handlebars = require('handlebars');
+const { allowInsecurePrototypeAccess } = require('@handlebars/allow-prototype-access');
+
+app.engine('handlebars', exphbs({
+    // ...implement newly added insecure prototype access
+    handlebars: allowInsecurePrototypeAccess(Handlebars)
+    })
+    ...
+);
+***********************************************************
+
+3. Định nghĩa hàm helper formatDate và cấu hình sử dụng các helper trong handlebars View Engine
+- index.js
+
+// Use View Engine
+function formatDate(date) {
+    return date.toLocaleString("en-US");
+}
+
+var expressHbs = require('express-handlebars');
+var paginateHelper = require('express-handlebars-paginate');
+var hbs = expressHbs.create({
+    extname: 'hbs',
+    defaultLayout: 'layout',
+    layoutsDir: __dirname + '/views/layouts/',
+    partialsDir: __dirname + '/views/partials/',
+    helpers: {
+        paginate: paginateHelper.createPagination,
+        formatDate: formatDate
+    }
+});
+app.engine('hbs', hbs.engine);
+app.set('view engine', 'hbs');
+
+4. Định nghĩa Controller thao tác với các bảng dữ liệu
+- controllers/products.js
+
+var controller = {};
+
+var models = require('../models');
+var Products = models.Product;
+
+controller.getAll = function(callback){
+    Products
+    .findAll()
+    .then(function(products){
+        products.forEach(product => {
+            product.price = parseFloat(product.price).toFixed(2);
+        });
+        callback(products);
+    })
+};
+
+controller.getById = function(id, callback){
+    Products
+    .findOne({ 
+        where: {id: id},
+        include: [models.Comment]
+    })
+    .then(function(product){
+        product.price = parseFloat(product.price).toFixed(2);
+        callback(product);
+    });
+};
+
+module.exports = controller;
+
+5. Định nghĩa route xử lý trả Danh sách sản phẩm cho người dùng
+- routes/products.js
+
+var express = require('express');
+var router = express.Router();
+
+var controller = require('../controllers/products');
+router.get('/', function(req, res){
+    controller.getAll(function(products){
+        res.locals.products = products;
+        res.render('index');
+    });
+});
+
+
+router.get('/:id', function(req, res){
+    var id = req.params.id;
+    controller.getById(id, function(product){
+        var page = parseInt(req.query.page);
+        page = isNaN(page) ? 1 : page;
+        var limit = 5;
+        var pagination = {
+            limit: limit,
+            page: page,
+            totalRows: product.Comments.length
+        }
+
+        var offset = (page-1)*limit;
+        product.Comments = product.Comments.sort(function(a, b){
+            return b.updatedAt.getTime() - a.updatedAt.getTime();
+        }).slice(offset, offset + limit);
+        
+        res.locals.product = product;
+        res.locals.pagination = pagination;
+        res.locals.hasPagination = (pagination.totalRows/limit > 1);
+        res.render('details');
+    });
+});
+
+module.exports = router;
+
+
+6. Chỉnh sửa các view hiển thị kết quả
+- views/index.hbs
+ 
+- views/details.hbs
+
+7. Chạy và kiểm tra kết quả
+$nodemon index
+http://localhost:5000/

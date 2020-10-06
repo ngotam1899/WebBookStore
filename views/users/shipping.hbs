@@ -1,0 +1,99 @@
+<!-- Main Content -->
+{{> stepCart}}
+<div class="container my-5">
+  <div class="row content">
+    <div class="col-md-6 shipping col-sm-6 col-xs-12">
+      <h3 class="text-center">Shipping Address</h3>
+      <hr>
+      <form method="POST" action="/cart/payment">
+        <div class="row">
+          <div class="col-12">
+            <div class="form-group">
+              <input type="text" name="first_name" id="first_name" class="form-control input-sm"
+                placeholder="First Name">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12">
+            <div class="form-group">
+              <input type="text" name="last_name" id="last_name" class="form-control input-sm" placeholder="Last Name">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+
+          <div class="col-12">
+            <div class="form-group">
+              <input type="email" name="email" id="email" class="form-control input-sm" placeholder="Your email">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+
+          <div class="col-12">
+            <div class="form-group">
+              <input type="tel" name="phone" id="phone" class="form-control input-sm"
+                placeholder="Phone number">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-xs-12 col-sm-12 col-md-12">
+            <div class="form-group">
+              <input type="text" name="address" id="address" class="form-control input-sm" placeholder="Address">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12 col-md-4">
+            <div class="form-group">
+              <input type="text" name="country" id="country" class="form-control input-sm" placeholder="country">
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="form-group">
+              <input type="text" name="state" id="state" class="form-control input-sm" placeholder="city">
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="form-group">
+              <input type="text" name="zip" id="zip" class="form-control input-sm" placeholder="pincode">
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <button type="submit" class="btn btn-primary pull-right w-100">
+            Continue to checkout
+          </button>
+        </div>
+      </form>
+
+    </div>
+    <div class="col-md-6 col-sm-6">
+      <div class="row">
+        <div class="col">
+          <h3 class="float-left">Your cart</h3>
+          <h3 class="float-right circle">{{cartItemCount}}</h3>
+        </div>
+      </div>
+      <div class="card">
+        {{#each items}}
+        <div class="card-body">
+          <div class="row">
+            <div class="col-12">
+              <h4 class="float-left">{{item.name}} x {{quantity}}</h4>
+              <h5 class="float-right">{{item.price}}$</h5>
+            </div>
+          </div>
+          <div>{{item.summary}}</div>
+        </div>
+        {{/each}}
+        <div class="card-footer">
+          <h4 class="float-left">Total (USD)</h4>
+          <h5 class="float-right my-2">{{totalPrice}}$</h5>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,95 @@
+<!-- Main Content -->
+<div class="container my-5">
+  <!-- Content -->
+  <div class="content">
+    <div class="row">
+      <div class="col-4">
+        <img src="{{product.imagepath}}" class="w-100" alt="{{product.name}}" />
+        <div class="mt-3">
+          <p class="text-left pull-left my-2"><b>${{product.price}}</b></p>
+          <button class="btn btn-success pull-right btn-add-to-cart" data-id={{product.id}}>Add to cart</button>
+        </div>
+      </div>
+      <div class="col-8 right_detail">
+        <div class="detail_content">
+          <h2 class="card-title">{{product.name}}</h2>
+          <p class="card-text">
+            {{product.summary}}
+          </p>
+          <h2 class="card-title">Book Detail</h2>
+          <p class="card-text">
+            {{product.description}}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- comment -->
+  <div class="comment">
+    <h2>Comment</h2>
+    {{#if isLoggedIn }}
+    <form id="addForm" role="form" data-product="{{product.id}}">
+      <div class="form-group">
+        <label for="comment">Add a new comment here</label>
+        <div class="form-row">
+          <div class="col-lg-11 col-10">
+            <input type="text" class="form-control" id="addComment" placeholder="Enter your comment">
+          </div>
+          <div class="col-lg-1 col-2">
+            <button type="submit" class="btn btn-primary w-100">Post</button>
+          </div>
+        </div>
+      </div>
+    </form>
+    <form id="editForm" role="form">
+      <div class="form-group">
+        <label for="editComment">Edit your comment here</label>
+        <div class="form-row">
+          <div class="col-lg-10 col-8">
+            <input type="text" class="form-control" id="editComment" placeholder="Edit your comment">
+          </div>
+          <input type="hidden" id="commentId">{{!-- Lưu thông tin Id của comment muốn chỉnh sửa --}}
+          <div class="col-lg-1 col-2">
+            <button type="submit" class="btn btn-primary w-100">Save</button>
+          </div>
+          <div class="col-lg-1 col-2">
+            <button class="btn btn-danger w-100 cancelEdit">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </form>
+    {{/if}}
+    <div id="comments">
+      {{#each product.Comments}}
+      <div class="row mx-1 mb-2 p-2 bg-light border-success" style="border-left: 6px solid; border-radius: 3px;">
+        <div class="col-10">
+          <p class="text-justify">{{formateDate createdAt}} - {{comment}}</p>
+        </div>
+        {{#if ../isLoggedIn}}
+        <div class="col-1 p-1">
+          <button type="button" class="btn btn-success btn-sm btn-block btn-comment-edit" data-id="{{id}}" data-comment="{{comment}}">
+            <i class="fa fa-edit"></i>
+          </button>
+        </div>
+        <div class="col-1 p-1">
+          <button type="button" class="btn btn-danger btn-sm btn-block btn-comment-delete" data-id="{{id}}" data-comment="{{comment}}">
+            <i class="fa fa-trash"></i>
+          </button>
+        </div>
+        {{/if}}
+      </div>
+      {{/each}}
+    </div>
+  </div>
+  {{#if hasPagination}}
+    <nav class="row justify-content-center">
+    {{{paginate pagination paginationClass="pagination"}}}
+  </nav>
+  {{/if}}
+</div>
+<script>
+    $(document).ready(()=>{
+    $('.pagination li').addClass('page-item');
+    $('.pagination li a').addClass('page-link');
+  });
+</script>

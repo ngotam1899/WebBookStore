@@ -1,0 +1,21 @@
+<div class="container my-3">
+    <div class="row">
+      {{#each products}}
+      <div class="col-lg-3 col-md-4 my-3">
+        <div class="card text-left ">
+          <a href="/products/{{id}}" title="Click to view details">
+            <img class="card-img-top" src="{{imagepath}}" alt="">
+          </a>
+          <div class="card-body">
+            <h4 class="card-title">{{name}}</h4>
+            <p class="card-text">{{description}}</p>
+          </div>
+          <div class="card-footer">
+            <div class="text-left pull-left pt-2">$ {{price}}</div>
+            <button class="btn btn-success pull-right btn-add-to-cart" data-id={{id}}>Add to cart</button>
+          </div>
+        </div>
+      </div>
+      {{/each}}
+    </div>
+  </div>

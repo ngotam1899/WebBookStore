@@ -1,0 +1,230 @@
+**** Phần 5 - Xây dựng thao tác thêm - xóa - sửa bằng các method post - put - delete ****
+
+1. Route xử lý các thao tác Thêm, Sửa, Xóa comment
+Thêm - POST     /comments        {comment,ProductIs}
+Sửa  - PUT      /comments/:id    {comment}             
+Xóa  - DELETE   /comments/:id     
+
+- index.js
+var commentRouter = require('./routes/comments');
+app.use('/comments', commentRouter);
+
+2. Định nghĩa các hàm controller định nghĩa cho comment (create, update, destroy)
+
+- controllers/comment.js
+
+var controller = {}
+var models = require('./../models');
+var Comments = models.Comment;
+
+controller.add = function(comment, callback){
+    Comments
+    .create(comment)
+    .then(callback)
+};
+
+controller.update = function(comment, callback){
+    Comments
+    .update({
+        comment: comment.comment
+    },{
+        where: {id: comment.id}
+    })
+    then(callback);
+};
+
+controller.delete = function(id, callback){
+    Comments
+    .destroy({
+        where:{id:id}
+    })
+    .then(callback);
+};
+
+module.exports=controller;
+
+3. Thư viện lấy dữ liệu từ phương thức POST:
+
+- index.js
+
+var bodyParser = require('body-parser');
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: false}));
+
+4. Định nghĩa các router cho comment bằng các method (post, put, delete)
+
+- routes/comments.js
+
+router.post('/', function(req, res){
+    var comment = {
+        comment: req.body.comment,
+        ProductId: req.body.ProductId
+    };
+    commentController.add(comment, function(){
+        res.sendStatus(204);    //Thành công
+        res.end();
+    })
+});
+
+router.put('/:id', function(req, res){
+    var comment = {
+        id: req.params.id,
+        comment: req.body.comment
+    }
+    commentController.update(comment, function(){
+        res.sendStatus(204);
+        res.end();
+    })
+});
+
+router.delete('/:id', function(req, res){
+    var id = req.params.id;
+    commentController.delete(id, function(){
+        res.sendStatus(204);
+        res.end();
+    });
+});
+
+5. Test phía Server với POSTMAN:
+
+5.1. POST: http://localhost:5000/comments
+
+body: {	//x-www-form-urlencoded
+	comment: 'Comment test',
+	ProductId: 1
+}
+
+********************************QUI TRÌNH DEBUG***************************
+1. Tại index.js. 
+app.use('/comments', commentRouter);
+Kiểm tra tiền tố '/comments' chuyển đến commentRouter để xử lý
+
+2. Tại routes/comments.js
+Lắng nghe phương thức POST, nhận từ body 2 thông tin (comment, ProductId)
+Sau khi nhận thành công, truyền vào giá trị cho commentController.add() xử lý
+**************************************************************************
+
+6. Xây dựng View (tại views/detail.hbs) thêm vào 2 form addForm vs editForm
+
+...
+<form id="addForm" role="form" data-product="{{product.id}}">
+      <div class="form-group">
+        <label for="comment">Add a new comment here</label>
+        <div class="form-row">
+          <div class="col-lg-11 col-10">
+            <input type="text" class="form-control" id="addComment" placeholder="Enter your comment">
+          </div>
+          <div class="col-lg-1 col-2">
+            <button type="submit" class="btn btn-primary w-100">Post</button>
+          </div>
+        </div>
+      </div>
+    </form>
+    <form id="editForm" role="form">
+      <div class="form-group">
+        <label for="editComment">Edit your comment here</label>
+        <div class="form-row">
+          <div class="col-lg-10 col-8">
+            <input type="text" class="form-control" id="editComment" placeholder="Edit your comment">
+          </div>
+          <input type="hidden" id="commentId">{{!-- Lưu thông tin Id của comment muốn chỉnh sửa --}}
+          <div class="col-lg-1 col-2">
+            <button type="submit" class="btn btn-primary w-100">Save</button>
+          </div>
+          <div class="col-lg-1 col-2">
+            <button class="btn btn-danger w-100 cancelEdit">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </form>
+...
+
+7. Sử dụng AJAX vs thư viện Jquery.min.js (Ajax ko hỗ trợ trong Jquery.slim.js)
+
+- views/layouts/layout.hbs
+
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="/js/main.js"></script>
+
+- public/js/main.js
+
+7.1. Xử lý Toggle Form (#addForm vs #editForm)
+...
+//hiển thị mặc định
+    $('#addForm').show();
+    $('#editForm').hide();
+
+//sau khi click edit thì show edit lên ẩn add
+    $('.btn-comment-edit').on('click', function(){
+        $('#addForm').hide();
+        $('#editForm').show();
+
+        //xử lý edit truyền dữ liệu vào input
+        $('#editComment').val($(this).data('comment'));
+        $('#commentId').val($(this).data('id'));
+    })
+...
+
+7.2. Xử lý Ajax Request
+
+**********************ADD****************************
+...
+//xử lý cho form addForm
+    $('#addForm').on('submit', function(event){
+        //ngăn sự kiện submit
+        event.preventDefault();
+        var productId = $(this).data('product');    //data-product
+        var comment = $('#addComment').val();       //lấy giá trị comment
+
+        $.ajax({   //Sử dụng thư viện "jquery.min.js" <script src="https://code.jquery.com/jquery-3.1.1.min.js">
+            url: '/comments',
+            type: 'POST',
+            data: {
+                comment: comment,
+                ProductId : productId
+            },
+            success: function(){    //thêm thành công thì load lại trang
+                location.reload();
+            }
+        })
+    })
+...
+
+**********************EDIT****************************
+...
+//người dùng nhấn nút save
+    $('#editForm').on('submit', function(event){
+        //ngăn sự kiện submit
+        event.preventDefault();
+        var id = $('#commentId').val();    //data-product
+        var comment = $('#editComment').val();       //lấy giá trị comment
+
+        $.ajax({   //Sử dụng thư viện "jquery.min.js" <script src="https://code.jquery.com/jquery-3.1.1.min.js">
+            url: '/comments/' + id, //chỉ truyền vào comment vì đã qui định lúc đầu
+            type: 'PUT',
+            data: {
+                comment: comment,
+            },
+            success: function(){    //thêm thành công thì load lại trang
+                location.reload();
+            }
+        })
+    })
+...
+
+**********************DELETE****************************
+...
+$('.btn-comment-delete').on('click', function(){
+      if(confirm('Are you sure to delete this comment?')){
+        var id = $(this).data('id');    //<Button data-id={id}></Button>
+        
+        $.ajax({
+          url: '/comments/'+ id,
+          type: 'DELETE',
+          success: function(){
+            location.reload();
+          }
+        })
+      }
+    })
+...

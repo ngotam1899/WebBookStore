@@ -1,0 +1,90 @@
+Hướng dẫn xây dựng Ứng dụng web Bookstore sử dụng Node.js
+
+**** Phần 4 - Xây dựng Ứng dụng web động Express server ****
+
+Phan 2. Xây dựng chức năng tìm kiếm
+
+1. Mở Command Line (Terminal), cd vào thư mục cần làm việc
+$ cd MSSV
+
+2. Thiet ke route xu ly
+HTTP	Trang web		Router				Data
+GET		search		  /search       query
+
+3. Định nghĩa controller thao tác với bảng dữ liệu 
+- controllers/products.js
+
+**************Lưu ý: Fix lỗi phiên bản Handlebars mới nhất*************
+const {Op} = require("sequelize");
+******************************************************************
+
+controller.search = function(query, callback) {
+    Products
+    .findAll({
+        where: {
+            [Op.or]: [
+                {
+                  name: {
+                    [Op.like]: `%${query}%`
+                  }
+                },
+                {
+                  summary: {
+                    [Op.like]: `%${query}%`
+                  }
+                },
+                {
+                    description: {
+                    [Op.like]: `%${query}%`
+                    }
+                  }
+              ]
+        }
+    }
+    )
+    .then(function(products){
+        products.forEach(function(product) {
+            product.price = parseFloat(product.price).toFixed(2);
+        });
+        callback(products);
+    })
+    .catch((error)=>{})
+};
+
+4. Định nghĩa route xử lý trả kết quả
+- index.js
+var index = require('./routes/index');
+app.use('/', index);
+
+- routes/index.js
+var express = require('express');
+var router = express.Router();
+
+var productController = require('../controllers/products');
+
+router.get('/', (req, res) => {
+    res.redirect('/products');
+});
+
+router.get('/search', (req, res) => {
+    var query = req.query.query;
+    res.locals.query = query;
+    productController.search(query, (products) => {
+        res.locals.products = products;
+        res.locals.count = products.length;
+        res.render('search');
+    });
+});
+
+//var models = require('../models');
+//router.get('/sync', function(req, res) {
+//    models.sequelize.sync().then(function() {
+//        res.send('database sync completed!');
+//    });
+//});
+
+module.exports = router;
+
+5. Chỉnh sửa view hiển thị kết quả
+- views/search.hbs
+

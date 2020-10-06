@@ -1,0 +1,123 @@
+<!-- Register -->
+    <section class="jumbotron text-center">
+        <div class="container">
+            <h1 class="jumbotron-heading">REGISTER NEW USER</h1>
+        </div>
+    </section>
+    <div class="container my-3">
+        <form class="form-horizontal" role="form" method="POST" action="/users/register">
+            <div class="row"> 
+                <div class="col-md-12">
+                    {{#if error }}
+                    <div class="form-control-feedback alert alert-danger ">
+                        <span class="align-middle">
+                           {{error}}
+                        </span>
+                    </div>
+                    {{/if}}
+                    {{#if errors}}
+                    <div class="form-control-feedback alert alert-danger ">
+                        <ul>
+                        {{#each errors}}
+                            <li>{{msg}}</li>
+                        {{/each}}
+                        </ul>
+                    </div>
+                    {{/if}}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3 field-label-responsive">
+                    <label for="name">Name</label>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <div class="input-group mb-2 mr-sm-2 mb-sm-0">
+                            <div class="input-group-addon" style="width: 2.6rem"><i class="fa fa-user"></i></div>
+                            <input type="text" name="name" class="form-control" id="name" placeholder="John Doe" required autofocus>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-control-feedback">
+                        <span class="text-danger align-middle">
+                            <!-- Put name validation error messages here -->
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3 field-label-responsive">
+                    <label for="email">E-Mail Address</label>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <div class="input-group mb-2 mr-sm-2 mb-sm-0">
+                            <div class="input-group-addon" style="width: 2.6rem"><i class="fa fa-at"></i></div>
+                            <input type="email" name="email" class="form-control" id="email" placeholder="you@example.com" required autofocus>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-control-feedback">
+                        <span class="text-danger align-middle">
+                                    <!-- Put e-mail validation error messages here -->
+                                </span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3 field-label-responsive">
+                    <label for="password">Password</label>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group has-danger">
+                        <div class="input-group mb-2 mr-sm-2 mb-sm-0">
+                            <div class="input-group-addon" style="width: 2.6rem"><i class="fa fa-key"></i></div>
+                            <input type="password" name="password" class="form-control" id="password" placeholder="Password" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-control-feedback">
+                        <span class="text-danger align-middle">
+                                    
+                                </span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3 field-label-responsive">
+                    <label for="password">Confirm Password</label>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <div class="input-group mb-2 mr-sm-2 mb-sm-0">
+                            <div class="input-group-addon" style="width: 2.6rem">
+                                <i class="fa fa-repeat"></i>
+                            </div>
+                            <input type="password" name="confirm" class="form-control" id="confirm" placeholder="Retype Your Password" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3"></div>
+                <div class="col-md-6">
+                    <button type="submit" class="btn btn-success"><i class="fa fa-user-plus"></i> Register</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <script>
+        var checkPasswordValidity = function(){
+            if ($('#password').val() != $('#confirm').val()){
+                $('#confirm')[0].setCustomValidity('Password must match.');
+            } else {
+                $('#confirm')[0].setCustomValidity('');
+            }
+        }
+        $('#password').on('change', checkPasswordValidity);
+        $('#confirm').on('change', checkPasswordValidity);
+    </script>

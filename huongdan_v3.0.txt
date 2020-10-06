@@ -1,0 +1,123 @@
+Hướng dẫn xây dựng Ứng dụng web Bookstore sử dụng Node.js
+
+**** Phần 3 - Thiết kế và Tạo CSDL sử dụng Sequelize & Postgres ****
+
+1. Mở Command Line (Terminal), cd vào thư mục cần làm việc
+$ cd MSSV
+
+2. Cài đặt các package cần sử dụng
+$ npm install -s pg pg-hstore sequelize sequelize-cli
+
+3. Tạo các thư mục cho CSDL sử dụng sequelize-cli
+$ sequelize init
+
+=> Các thư mục và file được sequelize tạo:
+- MSSV/
+	- config/config.json
+	- migrations/
+	- models/
+	- seeders/
+
+4. Tạo database và cấu hình kết nối trong config.json
+- config/config.json
+  "development": {
+    "username": "postgres",
+    "password": "postgres",
+    "database": "bookstoredb",
+    "host": "localhost",
+    "dialect": "postgres"
+  },
+
+5. Tạo models
+$ sequelize model:generate --name User --attributes name:string,email:string,password:string,isAdmin:boolean
+$ sequelize model:generate --name Product --attributes name:string,imagepath:string,summary:text,description:text,price:decimal
+$ sequelize model:generate --name Comment --attributes comment:string
+$ sequelize model:generate --name Address --attributes firstname:string,lastname:string,email:string,phone:string,address:string,country:string,state:string,zip:string
+$ sequelize model:generate --name Order --attributes totalQuantity:integer,totalPrice:decimal,paymentMethod:string,status:string
+$ sequelize model:generate --name OrderDetail --attributes quantity:integer,price:decimal
+
+=> Các file được sequelize tạo: 
+- MSSV/
+	- models/
+		- product.js
+		- comment.js
+		- user.js
+		- address.js
+		- order.js
+		- orderdetail.js
+		- index.js
+
+6. Định nghĩa lại các models, bổ sung thuộc tính và associations
+- models/comment.js
+var Comment = sequelize.define('Comment', {
+    comment: DataTypes.TEXT
+  }, {});
+  Comment.associate = function(models) {
+    Comment.belongsTo(models.Product);
+    Comment.belongsTo(models.User);
+  };
+- models/product.js
+Product.associate = function(models) {
+    Product.hasMany(models.Comment);
+  };
+...
+
+7. Định nghĩa route '/sync' trong server.js để tạo các Table đã định nghĩa lên Database
+// Create database
+var models = require('./models');
+app.get('/sync', function(req, res){
+	models.sequelize.sync().then(function(){
+		res.send('database sync completed!');
+	});
+});
+
+********Lưu ý: Fix lỗi phiên bản Sequelize mới nhất********
+Tại dòng 24 trong models>index.js sử thành:
+...
+const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes)
+...
+***********************************************************
+
+8. Start server và chạy /sync để tạo database
+$ nodemon app
+
+- Chạy browser: http://localhost:5000/sync
+
+- Kiểm tra database tạo có đủ Tables, Attributes và Associations 
+
+9.Tạo dự liệu mẫu cho database
+- Tạo file seeds
+$ sequelize seed:generate --name demo-product
+
+- Định nghĩa dữ liệu mẫu trong file seeds/xxx-demo-product.js
+module.exports = {
+  up: (queryInterface, Sequelize) => {
+    var products = [];
+    var i = 1;
+
+    for (i=1; i<10; i++) {
+      var product = {
+        name: `Book ${i}`,
+        imagepath: `/images/books/book${i}.jpeg`,
+        summary: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Numquam, vel?',
+        description: 'Lorem ipsum, dolor sit amet consectetur adipisicing elit. Quae dolor tenetur neque itaque et reprehenderit autem odit nesciunt, aut repellendus nisi sapiente nam ipsa vero excepturi perspiciatis, reiciendis ipsam, quo id consequatur. Delectus officiis explicabo sit quia, maiores nesciunt rem esse hic molestias velit illum in nulla modi quo officia.',
+        price: Math.random() * 100,
+        createdAt: Sequelize.literal('NOW()'),
+        updatedAt: Sequelize.literal('NOW()')
+      }
+      products.push(product);
+    }
+    console.log(products);
+    return queryInterface.bulkInsert('Products', products, {});
+  },
+
+  down: (queryInterface, Sequelize) => {
+      return queryInterface.bulkDelete('Products', null, {}); 
+  }
+};
+
+- Chạy lệnh tạo dữ liệu mẫu đã định nghĩa
+$ sequelize db:seed:all
+
+- Kiểm tra database đã có dữ liệu mẫu
+

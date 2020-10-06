@@ -1,0 +1,29 @@
+{
+  "development": {
+    "username": "postgres",
+    "password": "0765002122",
+    "database": "BookStore",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "postgres",
+    "password": "0765002122",
+    "database": "BookStore",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "tdheldyuomqmxu",
+    "password": "c35fea97a1fc169ee02551b8e630110f6f0daacf1a4e3e833b863b0a6c2784ae",
+    "database": "d4n86c9i59rkba",
+    "host": "ec2-54-224-175-142.compute-1.amazonaws.com",
+    "dialect": "postgres",
+      "dialectOptions": {
+        "ssl": {
+          "require": true,
+          "rejectUnauthorized": false
+        }
+      }
+  }
+}

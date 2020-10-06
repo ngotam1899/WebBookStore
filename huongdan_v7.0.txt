@@ -1,0 +1,204 @@
+**** Phần 6 - Áp dụng session / cookie để hiện thị nội dung CART (giỏ hàng) ****
+
+1. Cài đặt cookie-parser express-session.
+
+2. Sử dụng cookie-parser express-session.
+
+- index.js
+...
+//xử lý cookie/session vs cart
+var cookieParser = require('cookie-parser');
+app.use(cookieParser());
+
+var session = require('express-session');
+app.use(session({
+    cookie: {
+        httpOnly:true, 
+        maxAge: 30*24*60*60*1000    //tồn tại trong 30 ngày
+    },
+    secret: "Secret",                // chuổi kiểm tra
+    resave: false,                   //ko cần lưu lại sau 30 ngày
+    saveUninitialized: false,
+}));
+
+//gán cart vào trong session
+var Cart = require('./controllers/cart');
+app.use(function(req,res,next){
+    //nếu có giỏ hàng trong session thì lấy ra ngược lại thì truyền rỗng
+    var cart = new Cart(req.session.cart ? req.session.cart : {});
+    req.session.cart = cart;
+    next();
+});
+...
+
+3. Lấy ra giá trị cart từ session.
+
+- routes/cart.js
+..
+router.get('/', function(req, res){
+    //xử lý view
+    ....
+
+    //xử lý nội dung
+    var cart = req.session.cart;        //lấy ra cart đc truyền
+    res.locals.items = cart.generateArray();    //tạo cart
+    res.locals.totalPrice = cart.totalPrice();  //tính total
+
+    res.render('cart');
+})
+...
+
+4. Giới thiệu các phương thức Thêm, Xóa, Sửa 1 product vào cart
+
+- routes/cart.js
+4.1. Thêm product vào cart (POST) -> product, productId, quantity = 1
+...
+var productController = require('../controllers/products');
+router.post('/', function(req,res){
+    //phải truy vấn vào CSDL, lấy ra thông tin product
+    var productId = req.body.id;
+    productController.getById(productId, function(product){
+        //thêm sản phẩm
+        req.session.cart.add(product, product.id);
+        res.sendStatus(204);
+        res.end();
+    })
+})
+...
+
+4.2. Sửa product vào cart (PUT) -> productId, quantity
+...
+//sửa sản phẩm
+router.put('/', function(req, res){
+    var productId = req.body.id;
+    var quantity = parseInt(req.body.quantity);
+    req.session.cart.update(productId, quantity);
+    res.sendStatus(204);
+    res.end();
+})
+...
+
+4.3. Xóa product vào cart (DELETE) -> productId
+...
+//xóa sản phẩm
+router.delete('/', function(req, res){
+    var productId = req.body.id;
+    req.session.cart.remove(productId);
+    res.sendStatus(204);
+    res.end();
+})
+...
+
+5. Truyền các biến local lên view
+
+- views/cart.hbs
+
+6. Xử lý button "Add to cart" trên View
+
+6.1. Truyền productId vào data của button
+
+- views/partials/products.js
+...
+<button class="btn btn-success pull-right" data-id={{id}}>Add to cart</button>
+...
+
+- views/details.hbs
+...
+<button class="btn btn-success pull-right btn-add-to-cart" data-id={{product.id}}>Add to cart</button>
+...
+
+6.2. Xử lý
+- public/js/main.js
+...
+$('.btn-add-to-cart').on('click', function(){
+        var id= $(this).data('id');
+
+        $.ajax({
+            url: '/cart',
+            type:'POST',
+            data: {
+                id:id
+            },
+            success: function(){
+                location.reload();
+            }
+        })
+    })
+...
+
+7. Xử lý các product tại giao diện Cart (sửa)
+
+7.1. Sửa product truyền vào 1 button có type="submit" để nhận vào giá trị quantity
+
+- views/cart.hbs
+...
+<button type="submit" class="btn btn-sm btn-warning" data-id={{item.id}}><i class="fa fa-pencil-alt"></i>
+...
+ 
+7.2. Truyền {{item.id}} cho mỗi form quantity để dễ phân biệt
+...
+<td><input class="form-control" id="quantity{{item.id}}" type="text" value={{quantity}} /></td>
+...
+7.3. Xử lý
+
+- public/js/main.js
+...
+$('.formUpdate').on('submit', function(){
+        event.preventDefault();
+        var id=$(this).data('id');
+        var quantity = $(`#quantity${id}`).val();
+
+        $.ajax({
+            url: '/cart',
+            type:'PUT',
+            data:{
+                id,quantity
+            },
+            success: function(){
+                location.reload();
+            }
+        })
+    })
+...
+
+8. Xử lý các product tại giao diện Cart (xóa)
+...
+<button class="btn btn-sm btn-danger btn-cart-delete" data-id={{item.id}}><i class="fa fa-trash"></i></button> 
+...
+$('.btn-cart-delete').on('click', function(){
+        if(confirm('Remove product?')){
+            var id = $(this).data('id');
+            $.ajax({
+                url: '/cart',
+                type:'DELETE',
+                data:{
+                    id
+                },
+                success: function(){
+                    location.reload();
+                }
+            })
+        }
+    })
+...
+
+9. Thêm totalQuantity vào header hiển thị số lượng products đang có trong cart
+- views/partials/header.hbs
+...
+<span class="badge badge-light">{{cartItemCount}}</span>
+...
+
+- index.js
+...
+var Cart = require('./controllers/cart');
+app.use(function(req,res,next){
+    //nếu có giỏ hàng trong session thì lấy ra ngược lại thì truyền rỗng
+    var cart = new Cart(req.session.cart ? req.session.cart : {});
+****res.locals.cartItemCount = cart.totalQuantity();******************
+    req.session.cart = cart;
+    next();
+});
+...
+
+
+

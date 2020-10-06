@@ -1,0 +1,192 @@
+Hướng dẫn xây dựng Ứng dụng web Bookstore sử dụng Node.js
+
+**** Phần 2 - Xây dựng ứng dụng web Express đơn giản từ website tĩnh ****
+
+Bước 1: Tạo ứng dụng Server Express
+
+1. Mở Command Line (Terminal), cd vào thư mục cần làm việc
+$ cd MSSV
+
+2. Tạo file package.json
+$ npm init
+
+3. Cài đặt các package cần sử dụng
+$ npm install -s express express-handlebars
+
+4. Tạo file index.js và định nghĩa Express server đơn giản
+- MSSV/
+	- index.js
+
+var express = require('express');
+var app = express();
+
+// Setting for app here
+// Set Public Folder
+app.use(express.static(__dirname + '/public'));
+
+// Define your route here
+
+// Set Server Port & Start Server
+app.set('port', (process.env.PORT || 5000));
+
+app.listen(app.get('port'), function(){
+	console.log('Server is listening at port ' + app.get('port'));
+});
+	
+5. Start server
+$ nodemon app
+
+6. Kiểm tra trên trình duyệt
+http://localhost:5000
+
+Bước 2: Định nghĩa sử dụng View Engine
+
+7. Thiết lập View engine handlebars trong index.js
+// Use View Engine
+var expressHbs = require('express-handlebars');
+var hbs = expressHbs.create({
+	extname			: 'hbs',
+	defaultLayout	: 'layout', 
+	layoutsDir		: __dirname + '/views/layouts/',
+	partialsDir		: __dirname + '/views/partials/',
+});
+app.engine('hbs', hbs.engine);
+app.set('view engine', 'hbs');
+
+8. Tạo các thư mục cho view trong thư mục gốc web
+- MSSV/
+	- views/
+		- layouts/
+			- layout.hbs
+		- partials/
+			- header.hbs
+			- footer.hbs
+	
+9. Xây dựng các view sử dụng các file *.html trong thư mục public:
+- Chuyển các file *.html trong thư mục public vào thư mục views
+- Đổi tên các file thành *.hbs
+- Sử dụng cấu trúc chung của file index.html làm layout.hbs
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    ...
+</head>
+<body>
+    {{> header }}
+    {{{ body }}}
+    {{> footer }}
+    
+    ...
+</body>
+</html>
+
+- Nội dung header của index.html cho header.hbs
+- Nội dung footer của index.html cho footer.hbs
+- Nội dung chính cua index.html cho index.hbs
+- Tương tự, nội dung chính của các file *.html còn lại cho *.hbs
+
+10. Định nghĩa route trong index.js để test render view
+// Test view render
+app.get('/', function(req, res){
+	res.render('index');
+});
+
+11. Chỉnh sửa đương dẫn URL (css, js, images, hyperlinks) trong các view về địa chỉ gốc web
+Vd: css/styles.cs => /css/styles.cs
+	images/logo.png => /images/logo.png
+
+12. Kiểm tra kết quả trang chủ
+http://localhost:5000
+Ghi chú: chỉ kiểm tra kết quả hiển thị của trang chủ, các liên kết hyperlinks (menu) hiện tại sẽ không hoạt động được do chưa được định nghĩa route hiển thị, sẽ xử lý trong bước sau
+
+Bước 3: Định nghĩa và xử lý route hiển thị
+12. Thiết kế routes
+HTTP	Trang web	Route				
+GET	index.html	/, /products
+GET	details.html	/products/:id
+
+GET	cart.html	/cart
+GET	checkout.html	/cart/checkout
+POST	payment.html	/cart/shipping
+POST	confirm.html	/cart/payment
+
+GET	register.html	/users/register		
+GET	login.html	/users/login
+GET	orderhistory.html	/users/orders
+GET	orderdetails.html	/users/orders/:id
+
+13. Chỉnh sửa đường dẫn URL của các hyperlink trong nội dung các view thành các route tương ứng như thiết kế
+Vd: index.html => /
+	
+14. Tạo thư mục routes và các file định nghĩa routes
+- MSSV/
+	- routes/
+		- products.js
+		- cart.js
+		- users.js
+
+15. Định nghĩa các routes
+- index.js
+app.get('/', function(req, res){
+	res.redirect('/products');
+});
+
+var products = require('./routes/products');
+app.use('/', products);
+
+var cart = require('./routes/cart');
+app.use('/cart', cart);
+
+var users = require('./routes/users');
+app.use('/users', users);
+
+- routes/products.js
+var express = require('express');
+var router = express.Router();
+
+router.get('/', function(req, res){
+	res.render('index');
+});
+
+router.get('/:id', function(req, res){
+	res.render('details');
+});
+
+module.exports = router;
+
+- routes/cart.js
++ router.get('/'... => res.render('cart')
++ router.get('/checkout'... => res.render('checkout')
++ router.post('/shipping'... => res.render('payment')
++ router.post('/payment'... => res.render('confirm')
+
+- routes/users.js
++ router.get('/login'... => res.render('login')
++ router.get('/register'... => res.render('register')
++ router.get('/orders'... => res.render('orderhistory')
++ router.get('/orders/:id'... => res.render('orderdetails')
+
+16. Xử lý thông báo lỗi khi truy cập route không tồn tại hoặc lỗi server nếu có (đặt code trước lệnh app.listen)
+- index.js
+
+// Error handler
+// Handle 404 Not found
+app.use(function(req, res){
+	res.locals.message = 'File Not Found';
+	res.status(404).render('error');
+});
+
+// Handle 500 Internal Server Error
+app.use(function(err, req, res, next) {
+	console.log(err);
+	res.locals.message = 'Internal Server Error';
+	res.status(500).render('error');
+});
+
+17. Chạy và kiểm tra kết quả tất cả các trang
+- Kiểm tra trang chủ và các liên kết trong trang
+http://localhost:5000
+
+- Kiểm tra thông báo lỗi
+http://localhost:5000/abc

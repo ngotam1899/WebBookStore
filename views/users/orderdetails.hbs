@@ -1,0 +1,78 @@
+<section class="jumbotron text-center">
+    <div class="container">
+        <h1 class="jumbotron-heading">ORDER
+            <span class="text-success">#{{order.id}}</span> DETAILS</h1>
+    </div>
+</section>
+<div class="container mb-3">
+    <div class="row equal">
+        <div class="col">
+            <div class="card" style="height:100%">
+                <div class="card-header">
+                    Shipping Address
+                </div>
+                <div class="card-body">
+                    <div class="card-text">{{order.Address.firstname}} {{order.Address.lastname}}</div>
+                    <div class="card-text">{{order.Address.email}}</div>
+                    <div class="card-text">{{order.Address.phone}}</div>
+                    <div class="card-text">{{order.Address.address}} - {{order.Address.country}} - {{order.Address.state}}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card" style="height:100%">
+                <div class="card-header">
+                    Ordered At
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{formatDate order.createdAt}}</p>
+                </div>
+                <div class="card-header">
+                    Payment Method
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{order.paymentMethod}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container">
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col"> </th>
+                <th scope="col">Product</th>
+                <th scope="col">Unit Price</th>
+                <th scope="col" class="text-center">Quantity</th>
+                <th scope="col" class="text-right">Unit Cost</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            {{#each details}}
+            <tr>
+                <td>
+                    <img src="{{Product.imagepath}}" style="width:50px; height:50px" /> </td>
+                <td>{{Product.name}}</td>
+                <td>{{Product.price}}</td>
+                <td>{{quantity}}</td>
+                <td class="text-right">$ {{price}}</td>
+
+            </tr>
+            {{/each}}
+
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+
+                <td class="text-right h6">Total Cost</td>
+                <td class="text-right h6">${{order.totalPrice}}</td>
+
+            </tr>
+        </tbody>
+    </table>
+
+</div>

@@ -1,0 +1,236 @@
+**** Phần 7 - Payment ****
+
+1. Định nghĩa trên giao diện các name truyền vào
+- views/users/shipping.hbs
+
+...
+<form method="POST" action="/cart/payment">
+        <div class="row">
+          <div class="col-12">
+            <div class="form-group">
+              <input type="text" name="first_name" id="first_name" class="form-control input-sm"
+                placeholder="First Name">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12">
+            <div class="form-group">
+              <input type="text" name="last_name" id="last_name" class="form-control input-sm" placeholder="Last Name">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+
+          <div class="col-12">
+            <div class="form-group">
+              <input type="email" name="email" id="email" class="form-control input-sm" placeholder="Your email">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+
+          <div class="col-12">
+            <div class="form-group">
+              <input type="tel" name="phone" id="phone" class="form-control input-sm"
+                placeholder="Phone number">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-xs-12 col-sm-12 col-md-12">
+            <div class="form-group">
+              <input type="text" name="address" id="address" class="form-control input-sm" placeholder="Address">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12 col-md-4">
+            <div class="form-group">
+              <input type="text" name="country" id="country" class="form-control input-sm" placeholder="country">
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="form-group">
+              <input type="text" name="state" id="state" class="form-control input-sm" placeholder="city">
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="form-group">
+              <input type="text" name="zip" id="zip" class="form-control input-sm" placeholder="pincode">
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <button type="submit" class="btn btn-primary pull-right w-100">
+            Continue to checkout
+          </button>
+        </div>
+      </form>
+...
+
+2. Lấy nội dung nhập đc lưu vào session
+---> Sau khi Thêm (post) Order Details thì render ra trang Payment (chọn phương thức thanh toán)
+
+- routes/cart.js
+...
+router.post('/payment', function(req, res){
+    //xử lý view
+    res.locals.cart='completed';
+    res.locals.shipping = 'completed';
+    res.locals.payment = 'active';
+
+    //xử lý nội dung
+    var address = {
+        first_name : req.body.first_name,
+        last_name : req.body.last_name,
+        email: req.body.email,
+        phone: req.body.phone,
+        address: req.body.address,
+        state: req.body.state,
+        zip: req.body.zip,
+        country: req.body.country
+    };
+    req.session.cart.address=address;   //lưu các thông tin vào session
+    //xử lý nội dung
+    var cart = req.session.cart;        //lấy ra cart đc truyền
+    res.locals.items = cart.generateArray();    //tạo cart
+    res.locals.totalPrice = cart.totalPrice();  //tính total
+    res.render('users/payment');
+})
+...
+
+3. Định nghĩa trên view tag Input có name-"paymentMethod" để nhận giá trị phương thức thanh toán
+- views/users/payment.hbs
+...
+<form method="POST" action="/cart/success">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="paymentMethod" id="paymentMethod1" value="COD" checked>
+            <label class="form-check-label" for="paymentMethod1">
+              COD
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="paymentMethod" id="paymentMethod2" value="VNPay" disabled>
+            <label class="form-check-label" for="paymentMethod2">
+              VNPay
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="paymentMethod" id="paymentMethod3" value="PayPal" disabled>
+            <label class="form-check-label" for="paymentMethod3">
+              PayPal
+            </label>
+          </div>
+          <hr/>
+          <div class="col-12">
+            <button type="submit" class="btn btn-success w-100">Confirm to Pay Now</button>
+       
+          </div>
+      </div>
+</form>
+...
+
+4. Xử lý với giá trị trả về paymentMethod
+
+- routes/cart.js
+...
+var orderController  = require('../controllers/orders');
+router.post('/success', function(req, res){
+    var paymentMethod = req.body.paymentMethod;
+    if(paymentMethod === 'COD'){
+        //lưu payment vào session
+        req.session.cart.paymentMethod = paymentMethod;
+        //sau khi saveOrder thì hiện thông báo lên màn hình
+        orderController.saveOrder(req.session.cart, function(){
+            res.locals.paymentStatus ="PAYMENT COMPLETE";
+            res.locals.paymentMessage = "Your payment is success";
+            res.render('users/success');
+        })
+    }else{
+        res.locals.paymentStatus ="PAYMENT FAIL";
+        res.locals.paymentMessage = "Some error happen";
+        res.render('users/success');
+    }
+
+    res.render('users/success');
+})
+...
+
+5. Định nghĩa Order trong controller để lưu data vào CSDL PostgreSQL
+
+5.1. CREATE Adress -> CREATE Order
+Adderss (ID),
+Order (totalQuantity, totalPrice, paymentMethod, status, AddressID),
+--> Khi create 1 đơn hàng thì cần lưu địa chỉ trc để Order lấy đc giá trị 
+khóa ngoại của Address.
+
+5.2. -> CREATE OrderDetails
+Order (ID)
+OrderDetails (quantity, price, OrderID)
+--> Sau khi create 1 đơn hàng, sẽ tiếp tục create 1 OrderDetails
+- controllers/orders.js
+...
+controller.saveOrder = function(cart, user, callback) {
+  models.Address
+  .create(cart.address)
+  .then(function(newAddress) {
+		var order = {
+			totalQuantity: cart.totalQuantity(),
+			totalPrice: cart.totalPrice(),
+			//lấy ra paymentMethod đã lưu vào session
+			paymentMethod: cart.paymentMethod,
+      status: 'Processing',
+      //lưu địa chỉ
+			AddressId: newAddress.id,
+			UserId: user.id
+		};
+    //lưu đơn hàng
+    models.Order
+    .create(order)
+    .then(function(newOrder) {
+			var items = cart.generateArray();
+			items.forEach(function(item) {
+				var detail = {
+					price: item.price,
+					quantity: item.quantity,
+					ProductId: item.item.id,
+					OrderId: newOrder.id
+				};
+
+				models.OrderDetail.create(detail);
+			});
+
+			// Lưu rồi thì xóa giỏ hàng
+			cart.empty();
+			//Gọi hàm callback để khi gọi sẽ xử lý
+			callback();
+		});
+	});
+};
+...
+
+6. Truyền req.session.cart vào hàm saveOrder để nhận các biến đã lưu trong session
+
+- routes/cart.js
+...
+var orderController  = require('../controllers/orders');
+router.post('/success', function(req, res){
+    var paymentMethod = req.body.paymentMethod;
+    if(paymentMethod === 'COD'){
+        //lưu payment vào session
+        req.session.cart.paymentMethod = paymentMethod;
+        //sau khi saveOrder thì hiện thông báo lên màn hình
+        //Truyền các biến cart đã lưu trong session vào
+        orderController.saveOrder(req.session.cart, function(){
+            res.locals.paymentStatus ="PAYMENT COMPLETE";
+            res.locals.paymentMessage = "Your payment is success";
+            res.render('users/success');
+        })
+    }else{
+        res.locals.paymentStatus ="PAYMENT FAIL";
+        res.locals.paymentMessage = "Some error happen";
+        res.render('users/success');
+    }
+})
+...

@@ -1,0 +1,46 @@
+Hướng dẫn xây dựng Ứng dụng web Bookstore sử dụng Node.js
+
+**** Phần 1: Xây dựng website tĩnh ****
+stark-stream-15647.herokuapp.com
+
+1. Download các thư viện
+http://getbootstrap.com/
+https://jquery.com/
+https://popper.js.org/
+https://fontawesome.com/
+Hình ảnh: https://www.google.com/search?q=book+cover
+
+2. Tổ chức thư mục web
+- MSSV/
+	- public/
+		- css/*.css
+		- js/*.js
+		- fonts/*.*
+		- images/*.jpg, jpeg, gif, png
+		- index.html
+		- details.html
+		- register.html
+		- login.html
+		- cart.html
+		- error.html
+		- checkout.html
+		- payment.html
+		- confirm.html
+		- orderhistory.html
+		- orderdetails.html
+
+3. Sử dụng các free template có sẵn xây dựng website
+- Cart
+https://bootsnipp.com/snippets/ZXKKD 
+
+- Register
+https://bootsnipp.com/snippets/0BVEA
+
+- Process steps 
+https://bootsnipp.com/snippets/raK3z
+
+- Checkout 
+https://getbootstrap.com/docs/4.0/examples/checkout/
+
+- Search icons 
+https://bootsnipp.com
